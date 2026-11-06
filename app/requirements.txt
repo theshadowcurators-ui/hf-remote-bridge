@@ -1,0 +1,4 @@
+fastapi>=0.128,<0.129
+uvicorn>=0.48,<0.49
+gradio_client>=2.0,<2.1
+python-multipart>=0.0.29,<0.1
