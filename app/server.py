@@ -25,6 +25,14 @@ ALLOWED_INPUT = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".wav", ".mp3", ".fla
 ALLOWED_OUTPUT = {".mp4", ".webm", ".mov"}
 TERMINAL = {"SUCCEEDED", "FAILED", "INTERRUPTED"}
 
+def sha256_file(path):
+    """Chunked SHA-256 compatible with Pinokio Python 3.10."""
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
 def now():
     return datetime.now(timezone.utc).isoformat()
 
@@ -139,7 +147,7 @@ def resolve_inputs(mapping):
             try: path=Path(row["path"]).resolve(strict=True)
             except OSError: raise HTTPException(422,"File missing")
             if not path.is_relative_to(UP.resolve()): raise HTTPException(422,"Unsafe input location")
-            with path.open("rb") as f: sha=hashlib.file_digest(f,"sha256").hexdigest()
+            sha=sha256_file(path)
             if sha!=row["sha256"]: raise HTTPException(422,"Upload SHA-256 mismatch")
             found[param]=path; hashes[param]=sha
     return found,hashes
@@ -175,7 +183,7 @@ def result_media(value,job_dir,extensions):
             if p in visited or not p.is_relative_to(root) or p.suffix.lower() not in extensions:return
             if p.stat().st_size<1 or p.stat().st_size>MAX_BYTES:return
             meta=verify_video(p); visited.add(p)
-            with p.open("rb") as f: digest=hashlib.file_digest(f,"sha256").hexdigest()
+            digest=sha256_file(p)
             items.append({"path":str(p),"name":p.name,"size_bytes":p.stat().st_size,
               "sha256":digest,**meta})
         elif isinstance(obj,dict):
