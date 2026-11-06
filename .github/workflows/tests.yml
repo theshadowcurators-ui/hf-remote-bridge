@@ -1,0 +1,23 @@
+name: HF Bridge source checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install -r app/requirements.txt pytest httpx
+      - name: Lint syntax
+        run: python -m compileall -q app
+      - name: Run offline tests (no GPU inference)
+        run: python -m pytest -q tests
