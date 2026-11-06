@@ -17,6 +17,8 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: python -m pip install -r app/requirements.txt pytest httpx
+      - name: Install ffprobe for real media validation
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Lint syntax
         run: python -m compileall -q app
       - name: Run offline tests (no GPU inference)
