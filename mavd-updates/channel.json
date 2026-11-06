@@ -1,0 +1,22 @@
+{
+  "schema": "mavd-updates/v1",
+  "repository": "theshadowcurators-ui/hf-remote-bridge",
+  "repository_id": "1448122190",
+  "branch": "mavd-backend-v0.1.1",
+  "schema_changes": "none",
+  "version": "0.2.0",
+  "files": [
+    {
+      "path": "backend/server.py",
+      "source": "mavd-updates/releases/v0.2.0/backend/server.py",
+      "sha256": "ad40d2818efd8abe6bd75d48f799bdd7fcff203ac4864a62098eeeff2098ebb7",
+      "size": 20403
+    },
+    {
+      "path": "backend/vault.py",
+      "source": "mavd-updates/releases/v0.2.0/backend/vault.py",
+      "sha256": "3162808179ab6b77a5ca7f5f917d924bdd98198c7241f21457557c73ba4dc736",
+      "size": 18719
+    }
+  ]
+}
