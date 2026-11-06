@@ -1,29 +1,33 @@
-# HF Remote Bridge
+# Master AI Video Director — Pinokio local backend (v0.1.1)
 
-Local-only Pinokio gateway for Hugging Face Gradio Spaces. Designed as the **first fallback** after a confirmed direct ChatGPT→Hugging Face connector/transfer failure. No Cloudflare, no publicly exposed PC port, no local model weights.
+This archive is **SOURCE READY, NOT INSTALLED ON YOUR PC**. Uses Python 3.10+ stdlib only (no model weights, no npm, no cloud subscription). A Pinokio launcher is provided but must be installed into `D:\YT\Pinokio\api\master-ai-video-director-backend`; do not place it under an unrelated app. This package does not change ClipPilot or any existing app.
 
-## Safety and boundaries
+## Install options
 
-- The gateway binds to `127.0.0.1` and accepts Hugging Face Space identifiers (owner/name), not arbitrary URLs.
-- Uploaded files remain on the PC; `gradio_client` sends them directly to the chosen Space.
-- Stable `request_id` prevents the same job from being submitted twice. Interrupted jobs are **not** auto-resubmitted.
-- Quota exhaustion, paid requests, authentication errors and model inference failures are **not** transfer failures.
-- Raw media, tokens, .env files and SQLite job state are excluded from GitHub.
-- A caller must first attempt the direct HF integration and confirm the remote job was **not submitted** before selecting the Pinokio fallback.
-- Installing a Pinokio launcher alone cannot enforce routing in other ChatGPT conversations; the connected plugin must know to invoke it.
+1. **Pinokio:** extract the archive as `D:\YT\Pinokio\api\master-ai-video-director-backend`. Refresh Pinokio; choose **Start Backend**. This package is not installed by ChatGPT and is not yet verified on the target PC.
+2. **Windows testing:** extract anywhere outside protected directories, run `START_WINDOWS.bat` with a Python 3.10+ installation. For verification, use `VERIFY_WINDOWS.bat`.
 
-## Installation
+Backend listens on `127.0.0.1:8768`, never `0.0.0.0`. By default data persists outside the app in `%USERPROFILE%\Documents\Master_AI_Video_Director_Data`; set `MAVD_DATA_DIR` to select a different persistent location. The app cannot accept public calls without deliberate reconfiguration. Do not turn on Pinokio Home Server or internet sharing.
 
-This repository is a Pinokio app launcher. From ChatGPT, inspect its exact GitHub commit with the Pinokio-PC connector, record review and use the approved `install_app` action. Start the installed app, then check `GET /health` and `GET /api/connector_spec`. The service is API-only and does not run models locally.
+## API
+- `GET /health`: unauthenticated, no sensitive data.
+- Authenticated with bearer token from `<data-root>/config/auth_token.txt` (do not post this secret in ChatGPT): `GET /v1/status`, `/v1/inventory`, `/v1/retention/plan`, `/v1/verify`.
+- Authenticated POST JSON: `/v1/projects`, `/v1/generations`, `/v1/generations/finalize`, `/v1/queue`, `/v1/queue/receipt`, `/v1/retention/commit`.
+- Authenticated POST binary `/v1/media?project_id=<id>&generation_id=<id>&role=RAW_MP4`; supports `video/mp4`, `image/png`, `image/jpeg`, `audio/wav`; max 500MB. Caller must supply a verified approved file.
 
-## REST interface
+### Privacy and current limits
+The existing Pinokio connector does **not yet have a secure automated token-to-tool handoff**. Do not expose your token in chat, do not spoof an app API, do not claim full plugin-to-backend integration just because the process listens locally. The backend can run on PC and be tested locally; connector integration is a separate step requiring an approved authenticated bridge.
 
-- `POST /api/uploads`: multipart `file`, produces `file_id` and SHA-256.
-- `POST /api/jobs`: `{space,api_name,request_id,file_ids,parameters,expect_extensions}`, returns persistent `job_id`.
-- `GET /api/jobs/{job_id}`: job status and verified media metadata.
-- `GET /api/jobs/{job_id}/events`: stage history.
-- `GET /health`, `GET /api/capabilities`, `GET /api/connector_spec`.
+## Retention
+- At most **5 project archives**, each with **latest 10 generated versions**.
+- Raw+final MP4+QC image within generation count as **one** version; file media is deduplicated by SHA-256. Legacy model/skill knowledge is separate.
+- An additional server-side integrity scan refuses pruning if any file SHA-256 differs, regardless of client flags.
 
-Run `python -m pytest -q tests` after installing dependencies. Every generated MP4 must pass `ffprobe` before the gateway reports SUCCEEDED.
+`retention-plan` shows what is eligible without deleting anything. Actual `prune` uses last index and checks file hashes. High-confidence receipts report deleted hashes and size; no silent removal.
+- `SAVED_VERIFIED` / `DELETED_VERIFIED` need evidence. Offline queue operations are idempotent and retain `PENDING` / `FAILED` status until serviced.
+- Never equate a temporary CDN URL to locally archived media. Keep SHA-256, original approvals and concise tombstone reports after removing old byte-heavy generations.
 
-**Status**: Source code can be published and locally tested without invoking remote GPU generation. The ChatGPT→Pinokio→HF→ChatGPT end-to-end path is only confirmed after an actual permitted test and native output transfer.
+## Verification
+`python -m unittest discover -s tests -v` checks storage, dedupe, pruning, 50-generation cap, operations, audit chain, and offline reports. The plugin additionally checks remote Library backup independently.
+
+**Automatic cleanup trigger:** `POST /v1/generations/finalize` after all required media roles have been uploaded and SHA-256 readback confirmed. This atomically marks the generation complete, then prunes retired versions with verified receipts. Creating a pending generation does NOT evict old media.

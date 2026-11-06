@@ -1,1 +1,0 @@
-module.exports={run:[{method:"shell.run",params:{path:"app",venv:"env",message:"python -m pip install -r requirements.txt"}}]};

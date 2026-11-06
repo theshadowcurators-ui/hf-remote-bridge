@@ -1,1 +1,1 @@
-module.exports = {run:[{method:"shell.run",params:{path:"app",venv:"env",message:"python -m pip install -r requirements.txt"}}]};
+module.exports = {run:[{method:"shell.run",params:{path:".",message:"python -m unittest discover -s tests -v"}}]};

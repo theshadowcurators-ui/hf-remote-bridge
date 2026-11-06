@@ -1,1 +1,1 @@
-module.exports={daemon:true,run:[{method:"shell.run",params:{path:"app",venv:"env",message:"python server.py",on:[{event:"/(http:\\/\\/[0-9.:]+)/",done:true}]}},{method:"local.set",params:{url:"{{input.event[1]}}"}}]};
+module.exports = {daemon:true,run:[{method:"shell.run",params:{path:".",message:"python backend/server.py serve --port 8768 --data-root D:/YT/Pinokio/data/master-ai-video-director",on:[{event:"/(http:\\/\\/[0-9.:]+)/",done:true}]}},{method:"local.set",params:{url:"{{input.event[1]}}"}}]};
